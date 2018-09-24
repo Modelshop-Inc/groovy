@@ -1145,7 +1145,12 @@ public class DefaultGroovyMethods extends DefaultGroovyMethodsSupport {
      * @since 1.0
      */
     public static boolean isCase(Collection caseValue, Object switchValue) {
-        return caseValue.contains(switchValue);
+
+        // tpt patch - need to check coerce
+        for (Object value : caseValue) {
+            if (coercedEquals(value, switchValue)) return true;
+        }
+        return false;
     }
 
     /**
@@ -6990,6 +6995,10 @@ public class DefaultGroovyMethods extends DefaultGroovyMethodsSupport {
         T answer = null;
         boolean first = true;
         for (T value : self) {
+
+            // tpt patch 2018-04-16
+            if (value==null) continue;
+
             if (first) {
                 first = false;
                 answer = value;
@@ -7077,6 +7086,10 @@ public class DefaultGroovyMethods extends DefaultGroovyMethodsSupport {
         Object answerValue = null;
         for (T item : self) {
             Object value = closure.call(item);
+
+            // tpt patch 2018-04-16
+            if (value==null) continue;
+
             if (first) {
                 first = false;
                 answer = item;
@@ -7310,6 +7323,10 @@ public class DefaultGroovyMethods extends DefaultGroovyMethodsSupport {
         Object answerValue = null;
         for (T item : self) {
             Object value = closure.call(item);
+
+            // tpt patch 2018-04-16
+            if (value==null) continue;
+
             if (first) {
                 first = false;
                 answer = item;
@@ -7394,6 +7411,10 @@ public class DefaultGroovyMethods extends DefaultGroovyMethodsSupport {
         T answer = null;
         boolean first = true;
         for (T value : self) {
+
+            // tpt patch 2018-04-16
+            if (value==null) continue;
+
             if (first) {
                 first = false;
                 answer = value;

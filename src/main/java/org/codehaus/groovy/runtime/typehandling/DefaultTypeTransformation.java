@@ -595,13 +595,18 @@ public class DefaultTypeTransformation {
                     if (!equalityCheckOnly) cause = cce;
                 }
             }
+            // TPT 2016-09-23 - allow naked string enum compares
+            if (left instanceof Enum || right instanceof Enum) {
+                return left.toString().compareTo(right.toString());
+            }
         }
 
+		/* TPT 2016-09-21 - comment out to cause non-compatible equality compares to throw an exception - also, remove data from error message (security)
         if (equalityCheckOnly) {
             return -1; // anything other than 0
-        }
-        String message = MessageFormat.format("Cannot compare {0} with value ''{1}'' and {2} with value ''{3}''",
-                left.getClass().getName(), left, right.getClass().getName(), right);
+        } */
+        String message = MessageFormat.format("Cannot compare {0} with {1}",
+                left.getClass().getName(), right.getClass().getName());
         if (cause != null) {
             throw new IllegalArgumentException(message, cause);
         } else {

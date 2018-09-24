@@ -1069,7 +1069,7 @@ public class MetaClassImpl implements MetaClass, MutableMetaClass {
      * @see MetaClass#invokeMethod(Class, Object, String, Object[], boolean, boolean)
      */
     public Object invokeMethod(Class sender, Object object, String methodName, Object[] originalArguments, boolean isCallToSuper, boolean fromInsideClass) {
-        checkInitalised();
+        //checkInitalised();
         if (object == null) {
             throw new NullPointerException("Cannot invoke method: " + methodName + " on null object");
         }
@@ -1448,7 +1448,7 @@ public class MetaClassImpl implements MetaClass, MutableMetaClass {
     }
 
     public Object invokeStaticMethod(Object object, String methodName, Object[] arguments) {
-        checkInitalised();
+        //checkInitalised();
 
         final Class sender = object instanceof Class ? (Class) object : object.getClass();
         if (sender != theClass) {
@@ -1698,7 +1698,7 @@ public class MetaClassImpl implements MetaClass, MutableMetaClass {
      * @since Groovy 2.1.0
      */
     public MetaMethod retrieveConstructor(Object[] arguments) {
-        checkInitalised();
+        //checkInitalised();
         if (arguments == null) arguments = EMPTY_ARGUMENTS;
         Class[] argClasses = MetaClassHelper.convertToTypeArray(arguments);
         MetaClassHelper.unwrap(arguments);
@@ -1723,7 +1723,7 @@ public class MetaClassImpl implements MetaClass, MutableMetaClass {
     }
 
     private Object invokeConstructor(Class at, Object[] arguments) {
-        checkInitalised();
+        //checkInitalised();
         if (arguments == null) arguments = EMPTY_ARGUMENTS;
         Class[] argClasses = MetaClassHelper.convertToTypeArray(arguments);
         MetaClassHelper.unwrap(arguments);
@@ -1755,7 +1755,7 @@ public class MetaClassImpl implements MetaClass, MutableMetaClass {
      * properties to set
      */
     public void setProperties(Object bean, Map map) {
-        checkInitalised();
+        //checkInitalised();
         for (Iterator iter = map.entrySet().iterator(); iter.hasNext();) {
             Map.Entry entry = (Map.Entry) iter.next();
             String key = entry.getKey().toString();
@@ -1779,7 +1779,7 @@ public class MetaClassImpl implements MetaClass, MutableMetaClass {
             return mc.getProperty(sender, object, name, useSuper, false);
         }
 
-        checkInitalised();
+        //checkInitalised();
 
         //----------------------------------------------------------------------
         // turn getProperty on a Map to get on the Map itself
@@ -1888,7 +1888,7 @@ public class MetaClassImpl implements MetaClass, MutableMetaClass {
             };
         }
 
-        checkInitalised();
+        //checkInitalised();
 
         //----------------------------------------------------------------------
         // turn getProperty on a Map to get on the Map itself
@@ -2112,7 +2112,7 @@ public class MetaClassImpl implements MetaClass, MutableMetaClass {
      * @return a list of MetaProperty objects
      */
     public List<MetaProperty> getProperties() {
-        checkInitalised();
+        //checkInitalised();
         SingleKeyHashMap propertyMap = classPropertyIndex.getNullable(theCachedClass);
         if (propertyMap==null) {
             // GROOVY-6903: May happen in some special environment, like under Android, due
@@ -2628,7 +2628,7 @@ public class MetaClassImpl implements MetaClass, MutableMetaClass {
      * @param fromInsideClass Whether the call was invoked from the inside or the outside of the class.
      */
     public void setProperty(Class sender, Object object, String name, Object newValue, boolean useSuper, boolean fromInsideClass) {
-        checkInitalised();
+        //checkInitalised();
 
         //----------------------------------------------------------------------
         // handling of static
@@ -2849,7 +2849,7 @@ public class MetaClassImpl implements MetaClass, MutableMetaClass {
      * @return The attribute value
      */
     public Object getAttribute(Class sender, Object object, String attribute, boolean useSuper, boolean fromInsideClass) {
-        checkInitalised();
+        //checkInitalised();
 
         boolean isStatic = theClass != Class.class && object instanceof Class;
         if (isStatic && object != theClass) {
@@ -2890,7 +2890,7 @@ public class MetaClassImpl implements MetaClass, MutableMetaClass {
      * @param fromInsideClass Whether the call was invoked from the inside or the outside of the class
      */
     public void setAttribute(Class sender, Object object, String attribute, Object newValue, boolean useSuper, boolean fromInsideClass) {
-        checkInitalised();
+        //checkInitalised();
 
         boolean isStatic = theClass != Class.class && object instanceof Class;
         if (isStatic && object != theClass) {
