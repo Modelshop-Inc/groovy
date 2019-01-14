@@ -582,22 +582,22 @@ public class DefaultTypeTransformation {
             } else if (left instanceof GString && right instanceof String) {
                 return ((GString) left).compareTo(right);
             }
-            if (!equalityCheckOnly || left.getClass().isAssignableFrom(right.getClass())
-                    || (right.getClass() != Object.class && right.getClass().isAssignableFrom(left.getClass())) //GROOVY-4046
-                    ) {
-                Comparable comparable = (Comparable) left;
-                // GROOVY-7876: when comparing for equality we try to only call compareTo when an assignable
-                // relationship holds but with a container/holder class and because of erasure, we might still end
-                // up with the prospect of a ClassCastException which we want to ignore but only if testing equality
-                try {
-                    return comparable.compareTo(right);
-                } catch (ClassCastException cce) {
-                    if (!equalityCheckOnly) cause = cce;
-                }
-            }
+
             // TPT 2016-09-23 - allow naked string enum compares
             if (left instanceof Enum || right instanceof Enum) {
                 return left.toString().compareTo(right.toString());
+            }
+
+            // TPT 2018-11-12 - remove criteria for assignable before calling compareTo - allows equality override
+            // move compareTo to bottom
+            Comparable comparable = (Comparable) left;
+            // GROOVY-7876: when comparing for equality we try to only call compareTo when an assignable
+            // relationship holds but with a container/holder class and because of erasure, we might still end
+            // up with the prospect of a ClassCastException which we want to ignore but only if testing equality
+            try {
+                return comparable.compareTo(right);
+            } catch (ClassCastException cce) {
+                if (!equalityCheckOnly) cause = cce;
             }
         }
 

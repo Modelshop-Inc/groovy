@@ -6363,6 +6363,10 @@ public class DefaultGroovyMethods extends DefaultGroovyMethodsSupport {
         Object[] param = new Object[1];
         for (Object next : self) {
             param[0] = next;
+
+            // tpt patch 2019-01-14 - handle nulls like zeros (very first null causes NPE)
+            if (param[0]==null) continue;
+
             if (first) {
                 result = param[0];
                 first = false;
