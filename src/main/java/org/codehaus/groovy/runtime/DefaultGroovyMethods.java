@@ -6621,6 +6621,10 @@ public class DefaultGroovyMethods extends DefaultGroovyMethodsSupport {
         while (self.hasNext()) {
             closureParam[0] = self.next();
             plusParam[0] = closure.call(closureParam);
+
+            // tpt patch 2019-01-14 - handle nulls like zeros (very first null causes NPE)
+            if (plusParam[0]==null) continue;
+
             if (first) {
                 result = plusParam[0];
                 first = false;
