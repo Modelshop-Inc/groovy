@@ -1,0 +1,70 @@
+From 329669e370369b2c9588c06ba6eefd9624c78fa7 Mon Sep 17 00:00:00 2001
+From: Tom Tobin <tomtobin@modelshop.com>
+Date: Mon, 14 Jan 2019 08:54:13 -0500
+Subject: [PATCH 1054/1057] Changes to handle first value a null in sum{} and
+ extend compare to allow string compare with object's toString()
+
+---
+ .../groovy/runtime/DefaultGroovyMethods.java  |  4 +++
+ .../DefaultTypeTransformation.java            | 26 +++++++++----------
+ 2 files changed, 17 insertions(+), 13 deletions(-)
+
+diff --git a/src/main/java/org/codehaus/groovy/runtime/DefaultGroovyMethods.java b/src/main/java/org/codehaus/groovy/runtime/DefaultGroovyMethods.java
+index f961be4b9..331ebf6ed 100644
+--- a/src/main/java/org/codehaus/groovy/runtime/DefaultGroovyMethods.java
++++ b/src/main/java/org/codehaus/groovy/runtime/DefaultGroovyMethods.java
+@@ -6362,6 +6362,10 @@ public class DefaultGroovyMethods extends DefaultGroovyMethodsSupport {
+         Object[] param = new Object[1];
+         for (Object next : self) {
+             param[0] = next;
++
++            // tpt patch 2019-01-14 - handle nulls like zeros (very first null causes NPE)
++            if (param[0]==null) continue;
++
+             if (first) {
+                 result = param[0];
+                 first = false;
+diff --git a/src/main/java/org/codehaus/groovy/runtime/typehandling/DefaultTypeTransformation.java b/src/main/java/org/codehaus/groovy/runtime/typehandling/DefaultTypeTransformation.java
+index 153a10bd0..324751222 100644
+--- a/src/main/java/org/codehaus/groovy/runtime/typehandling/DefaultTypeTransformation.java
++++ b/src/main/java/org/codehaus/groovy/runtime/typehandling/DefaultTypeTransformation.java
+@@ -582,23 +582,23 @@ public class DefaultTypeTransformation {
+             } else if (left instanceof GString && right instanceof String) {
+                 return ((GString) left).compareTo(right);
+             }
+-            if (!equalityCheckOnly || left.getClass().isAssignableFrom(right.getClass())
+-                    || (right.getClass() != Object.class && right.getClass().isAssignableFrom(left.getClass())) //GROOVY-4046
+-                    ) {
+-                Comparable comparable = (Comparable) left;
+-                // GROOVY-7876: when comparing for equality we try to only call compareTo when an assignable
+-                // relationship holds but with a container/holder class and because of erasure, we might still end
+-                // up with the prospect of a ClassCastException which we want to ignore but only if testing equality
+-                try {
+-                    return comparable.compareTo(right);
+-                } catch (ClassCastException cce) {
+-                    if (!equalityCheckOnly) cause = cce;
+-                }
+-            }
++
+             // TPT 2016-09-23 - allow naked string enum compares
+             if (left instanceof Enum || right instanceof Enum) {
+                 return left.toString().compareTo(right.toString());
+             }
++
++            // TPT 2018-11-12 - remove criteria for assignable before calling compareTo - allows equality override
++            // move compareTo to bottom
++            Comparable comparable = (Comparable) left;
++            // GROOVY-7876: when comparing for equality we try to only call compareTo when an assignable
++            // relationship holds but with a container/holder class and because of erasure, we might still end
++            // up with the prospect of a ClassCastException which we want to ignore but only if testing equality
++            try {
++                return comparable.compareTo(right);
++            } catch (ClassCastException cce) {
++                if (!equalityCheckOnly) cause = cce;
++            }
+         }
+ 
+ 		/* TPT 2016-09-21 - comment out to cause non-compatible equality compares to throw an exception - also, remove data from error message (security)
+-- 
+2.17.0
+

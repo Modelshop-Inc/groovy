@@ -1,0 +1,28 @@
+From 6942287e0248162f42c2b6dc1e9a1aa43a4a4799 Mon Sep 17 00:00:00 2001
+From: Tom Tobin <tomtobin@modelshop.com>
+Date: Thu, 24 Jan 2019 20:50:22 -0500
+Subject: [PATCH 1055/1057] Changes to handle first value a null in sum{} and
+ extend compare to allow string compare with object's toString()
+
+---
+ .../org/codehaus/groovy/runtime/DefaultGroovyMethods.java     | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/src/main/java/org/codehaus/groovy/runtime/DefaultGroovyMethods.java b/src/main/java/org/codehaus/groovy/runtime/DefaultGroovyMethods.java
+index 331ebf6ed..f08d00267 100644
+--- a/src/main/java/org/codehaus/groovy/runtime/DefaultGroovyMethods.java
++++ b/src/main/java/org/codehaus/groovy/runtime/DefaultGroovyMethods.java
+@@ -6620,6 +6620,10 @@ public class DefaultGroovyMethods extends DefaultGroovyMethodsSupport {
+         while (self.hasNext()) {
+             closureParam[0] = self.next();
+             plusParam[0] = closure.call(closureParam);
++
++            // tpt patch 2019-01-14 - handle nulls like zeros (very first null causes NPE)
++            if (plusParam[0]==null) continue;
++
+             if (first) {
+                 result = plusParam[0];
+                 first = false;
+-- 
+2.17.0
+

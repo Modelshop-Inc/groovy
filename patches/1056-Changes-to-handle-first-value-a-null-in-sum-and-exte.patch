@@ -1,0 +1,26 @@
+From 59d329b2bc8e404127b428a360e6ecff0bb5d863 Mon Sep 17 00:00:00 2001
+From: Tom Tobin <tomtobin@modelshop.com>
+Date: Tue, 12 Feb 2019 11:51:00 -0500
+Subject: [PATCH 1056/1057] Changes to handle first value a null in sum{} and
+ extend compare to allow string compare with object's toString()
+
+---
+ build.gradle | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/build.gradle b/build.gradle
+index af80f9633..5beb38a20 100644
+--- a/build.gradle
++++ b/build.gradle
+@@ -78,7 +78,7 @@ allprojects {
+ 
+     buildDir = 'target'
+     sourceCompatibility = 1.7
+-    targetCompatibility = 10 
++    targetCompatibility = 11
+ 
+     group = 'org.codehaus.groovy'
+     version = groovyVersion
+-- 
+2.17.0
+
