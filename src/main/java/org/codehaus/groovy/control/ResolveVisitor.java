@@ -462,8 +462,8 @@ public class ResolveVisitor extends ClassCodeExpressionTransformer {
                 resolveFromModule(type, testModuleImports) ||
                 resolveFromCompileUnit(type) ||
                 resolveFromDefaultImports(type, testDefaultImports) ||
-                resolveFromStaticInnerClasses(type, testStaticInnerClasses) ||
-                resolveToOuter(type);
+                resolveToOuter(type) ||
+                resolveFromStaticInnerClasses(type, testStaticInnerClasses);   // TPT PATCH 2019-03-17, do static inner last, slow
     }
 
     private boolean resolveNestedClass(ClassNode type) {
@@ -566,7 +566,7 @@ public class ResolveVisitor extends ClassCodeExpressionTransformer {
                 String savedName = type.getName();
                 String replacedPointType = replaceLastPointWithDollar(savedName);
                 type.setName(replacedPointType);
-                if (resolve(type, false, true, true)) return true;
+                if (resolve(type, false, true, false)) return true;     // TPT PATCH 2019-03-17  already in static inner, don't keep doing
                 type.setName(savedName);
             }
         }
