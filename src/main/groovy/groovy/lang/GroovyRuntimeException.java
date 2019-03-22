@@ -51,6 +51,34 @@ public class GroovyRuntimeException extends RuntimeException {
         initCause(t);
     }
 
+    /*
+        BEGIN PATCH tpt Modelshop - enable faster exception handling 2019-03-22
+     */
+    private static boolean stackTraceOn = false;
+
+    public static void setStackTraceOn(boolean stackTraceValue) {
+        stackTraceOn = stackTraceValue;
+    }
+
+    public static boolean getStackTraceOn() {
+        return stackTraceOn;
+    }
+
+    @Override
+    public Throwable fillInStackTrace() {
+
+        // if stack traced turned on...
+        if (stackTraceOn) {
+            return super.fillInStackTrace();
+        }
+
+        return this;
+    }
+    /*
+        END PATCH
+    */
+
+
     public void setModule(ModuleNode module) {
         this.module = module;
     }
