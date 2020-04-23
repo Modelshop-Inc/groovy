@@ -51,7 +51,8 @@ public class StaticTypesTypeChooser extends StatementMetaTypeChooser {
             }
             return inferredType;
         }
-        if (target instanceof VariableExpression && ((VariableExpression) target).isThisExpression()) {
+        // tptpatch 2019-12-09
+        if (target instanceof VariableExpression && (((VariableExpression) target).isThisExpression() || ((VariableExpression) target).isDelegateExpression())) {
             // AsmClassGenerator may create "this" expressions that the type checker knows nothing about
             return current;
         }

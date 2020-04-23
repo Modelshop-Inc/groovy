@@ -187,6 +187,14 @@ public class VariableExpression extends Expression implements Variable {
         return "this".equals(variable);
     }
 
+    public boolean isDelegateExpression() {
+        // tptpatch - 2019-12-08 - add delegate as hidden this expression
+//        if (!isInStaticContext()) {
+//            return "delegate".equals(variable);
+//        }
+        return false;
+    }
+
     public boolean isSuperExpression() {
         return "super".equals(variable);
     }

@@ -1086,6 +1086,14 @@ public class AsmClassGenerator extends ClassGenerator {
         if (propName!=null) {
             // TODO: spread safe should be handled inside
             if (adapter == getProperty && !expression.isSpreadSafe()) {
+
+                // tpt patch - try to hold line number on odd forbidden bug
+                if (objectExpression.getLastLineNumber()==-1) {
+                    objectExpression.setLineNumber(currentASTNode.getLineNumber());
+                    objectExpression.setColumnNumber(currentASTNode.getColumnNumber());
+                    objectExpression.setLastLineNumber(currentASTNode.getLastLineNumber());
+                    objectExpression.setLastColumnNumber(currentASTNode.getLastColumnNumber());
+                }
                 controller.getCallSiteWriter().makeGetPropertySite(objectExpression, propName, expression.isSafe(), expression.isImplicitThis());
             } else if (adapter == getGroovyObjectProperty && !expression.isSpreadSafe()) {
                 controller.getCallSiteWriter().makeGroovyObjectGetPropertySite(objectExpression, propName, expression.isSafe(), expression.isImplicitThis());

@@ -293,7 +293,7 @@ public class ResolveVisitor extends ClassCodeExpressionTransformer {
         while (-1 != name.lastIndexOf('.')) {
             name = replaceLastPointWithDollar(name);
             type.setName(name);
-            if (resolve(type)) return true;
+            if (resolve(type, true)) return true;
         }
 
         if (resolveToNestedOfCurrentClassAndSuperClasses(type)) return true;
@@ -318,7 +318,7 @@ public class ResolveVisitor extends ClassCodeExpressionTransformer {
         String name = type.getName();
         if (enclosingType != type && !name.contains(".") && type.getClass().equals(ClassNode.class)) {
             ClassNode tmp = new ConstructedNestedClass(enclosingType,name);
-            if (resolve(tmp)) {
+            if (resolve(tmp, true)) {
                 if (!checkInnerTypeVisibility(enclosingType, tmp)) return false;
 
                 type.setRedirect(tmp);
@@ -339,11 +339,16 @@ public class ResolveVisitor extends ClassCodeExpressionTransformer {
     }
 
     private void resolveOrFail(ClassNode type, String msg, ASTNode node) {
-        if (resolve(type)) return;
-        if (resolveToInner(type)) return;
-        if (resolveToOuterNested(type)) return;
-
+        if (resolveOrFail(type, msg, node, false) || resolveOrFail(type, msg, node, true)) return;
         addError("unable to resolve class " + type.getName() + " " + msg, node);
+    }
+
+    // tpt 05-15-2019 - move check for static inner classes to the end, slow
+    private boolean resolveOrFail(ClassNode type, String msg, ASTNode node, boolean testStaticInnerClasses) {
+        if (resolve(type, testStaticInnerClasses)) return true;
+        if (resolveToInner(type)) return true;
+        if (resolveToOuterNested(type)) return true;
+        return false;
     }
 
     // GROOVY-7812(#1): Static inner classes cannot be accessed from other files when running by 'groovy' command
@@ -415,7 +420,7 @@ public class ResolveVisitor extends ClassCodeExpressionTransformer {
 
     private void resolveOrFail(ClassNode type, ASTNode node, boolean prefereImports) {
         resolveGenericsTypes(type.getGenericsTypes());
-        if (prefereImports && resolveAliasFromModule(type)) return;
+        if (prefereImports && (resolveAliasFromModule(type, false) || resolveAliasFromModule(type, true))) return;
         resolveOrFail(type, node);
     }
 
@@ -424,9 +429,18 @@ public class ResolveVisitor extends ClassCodeExpressionTransformer {
     }
 
     private boolean resolve(ClassNode type) {
-        return resolve(type, true, true, true);
+        return resolve(type, false) || resolve(type, true);
     }
 
+    private boolean resolve(ClassNode type, boolean testStaticInnerClasses) {
+        return resolve(type, true, true, testStaticInnerClasses);
+    }
+
+    private boolean resolve(ClassNode type, boolean testModuleImports, boolean testDefaultImports) {
+        return resolve(type, testModuleImports, testDefaultImports, false) || resolve(type, testModuleImports, testDefaultImports, true);
+    }
+
+    // TPT 5-15-2019 - try resolving without trying static inner first
     private boolean resolve(ClassNode type, boolean testModuleImports, boolean testDefaultImports, boolean testStaticInnerClasses) {
         resolveGenericsTypes(type.getGenericsTypes());
         if (type.isResolved() || type.isPrimaryClassNode()) return true;
@@ -459,7 +473,7 @@ public class ResolveVisitor extends ClassCodeExpressionTransformer {
         }
 
         return resolveNestedClass(type) ||
-                resolveFromModule(type, testModuleImports) ||
+                resolveFromModule(type, testModuleImports, testStaticInnerClasses) ||
                 resolveFromCompileUnit(type) ||
                 resolveFromDefaultImports(type, testDefaultImports) ||
                 resolveToOuter(type) ||
@@ -668,7 +682,7 @@ public class ResolveVisitor extends ClassCodeExpressionTransformer {
         }
     }
 
-    private boolean resolveAliasFromModule(ClassNode type) {
+    private boolean resolveAliasFromModule(ClassNode type, boolean testStaticInnerClasses) {
         // In case of getting a ConstructedClassWithPackage here we do not do checks for partial
         // matches with imported classes. The ConstructedClassWithPackage is already a constructed
         // node and any subclass resolving will then take place elsewhere
@@ -700,7 +714,7 @@ public class ResolveVisitor extends ClassCodeExpressionTransformer {
                 if (importNode != null && importNode != currImportNode) {
                     // static alias only for inner classes and must be at end of chain
                     ClassNode tmp = new ConstructedNestedClass(importNode.getType(), importNode.getFieldName());
-                    if (resolve(tmp, false, false, true)) {
+                    if (resolve(tmp, false, false, testStaticInnerClasses)) {
                         if ((tmp.getModifiers() & Opcodes.ACC_STATIC) != 0) {
                             type.setRedirect(tmp.redirect());
                             return true;
@@ -740,7 +754,7 @@ public class ResolveVisitor extends ClassCodeExpressionTransformer {
         return false;
     }
 
-    private boolean resolveFromModule(ClassNode type, boolean testModuleImports) {
+    private boolean resolveFromModule(ClassNode type, boolean testModuleImports, boolean testStaticInnerClasses) {
         if (type instanceof ConstructedNestedClass) return false;
 
         // we decided if we have a vanilla name starting with a lower case
@@ -751,7 +765,7 @@ public class ResolveVisitor extends ClassCodeExpressionTransformer {
         // of this name. This check is not done for vanilla names starting
         // with a lower case letter anymore
         if (type instanceof LowerCaseClass) {
-            return resolveAliasFromModule(type);
+            return resolveAliasFromModule(type, testStaticInnerClasses);
         }
 
         String name = type.getName();
@@ -779,7 +793,7 @@ public class ResolveVisitor extends ClassCodeExpressionTransformer {
         if (newNameUsed) type.setName(name);
 
         if (testModuleImports) {
-            if (resolveAliasFromModule(type)) return true;
+            if (resolveAliasFromModule(type, testStaticInnerClasses)) return true;
 
             if (module.hasPackageName()) {
                 // check package this class is defined in. The usage of ConstructedClassWithPackage here
@@ -797,7 +811,7 @@ public class ResolveVisitor extends ClassCodeExpressionTransformer {
             for (ImportNode importNode : module.getStaticImports().values()) {
                 if (importNode.getFieldName().equals(name)) {
                     ClassNode tmp = new ConstructedNestedClass(importNode.getType(), name);
-                    if (resolve(tmp, false, false, true)) {
+                    if (resolve(tmp, false, false, testStaticInnerClasses)) {
                         if ((tmp.getModifiers() & Opcodes.ACC_STATIC) != 0) {
                             type.setRedirect(tmp.redirect());
                             return true;
@@ -814,7 +828,7 @@ public class ResolveVisitor extends ClassCodeExpressionTransformer {
                 // not be included in the lookup. The case where the
                 // packagePrefix is really a class is handled elsewhere.
                 ConstructedClassWithPackage tmp = new ConstructedClassWithPackage(packagePrefix, name);
-                if (resolve(tmp, false, false, true)) {
+                if (resolve(tmp, false, false, testStaticInnerClasses)) {
                     ambiguousClass(type, tmp, name);
                     type.setRedirect(tmp.redirect());
                     return true;
@@ -824,7 +838,7 @@ public class ResolveVisitor extends ClassCodeExpressionTransformer {
             // check for star imports (import static pkg.Outer.*) matching static inner classes
             for (ImportNode importNode : module.getStaticStarImports().values()) {
                 ClassNode tmp = new ConstructedNestedClass(importNode.getType(), name);
-                if (resolve(tmp, false, false, true)) {
+                if (resolve(tmp, false, false, testStaticInnerClasses)) {
                     if ((tmp.getModifiers() & Opcodes.ACC_STATIC) != 0) {
                         ambiguousClass(type, tmp, name);
                         type.setRedirect(tmp.redirect());
@@ -1013,7 +1027,7 @@ public class ResolveVisitor extends ClassCodeExpressionTransformer {
         String className = lookupClassName(pe);
         if (className != null) {
             ClassNode type = ClassHelper.make(className);
-            if (resolve(type)) {
+            if (resolve(type, false)) {
                 Expression ret =  new ClassExpression(type);
                 ret.setSourcePosition(pe);
                 return ret;
@@ -1420,7 +1434,7 @@ public class ResolveVisitor extends ClassCodeExpressionTransformer {
             for (ImportNode importNode : module.getImports()) {
                 currImportNode = importNode;
                 ClassNode type = importNode.getType();
-                if (resolve(type, false, false, true)) {
+                if (resolve(type, false, false)) {
                     currImportNode = null;
                     continue;
                 }
@@ -1429,26 +1443,26 @@ public class ResolveVisitor extends ClassCodeExpressionTransformer {
             }
             for (ImportNode importNode : module.getStaticStarImports().values()) {
                 ClassNode type = importNode.getType();
-                if (resolve(type, false, false, true)) continue;
+                if (resolve(type, false, false)) continue;
                 // Maybe this type belongs in the same package as the node that is doing the
                 // static import. In that case, the package may not have been explicitly specified.
                 // Try with the node's package too. If still not found, revert to original type name.
                 if (type.getPackageName() == null && node.getPackageName() != null) {
                     String oldTypeName = type.getName();
                     type.setName(node.getPackageName() + "." + oldTypeName);
-                    if (resolve(type, false, false, true)) continue;
+                    if (resolve(type, false, false)) continue;
                     type.setName(oldTypeName);
                 }
                 addError("unable to resolve class " + type.getName(), type);
             }
             for (ImportNode importNode : module.getStaticImports().values()) {
                 ClassNode type = importNode.getType();
-                if (resolve(type, true, true, true)) continue;
+                if (resolve(type, true, true)) continue;
                 addError("unable to resolve class " + type.getName(), type);
             }
             for (ImportNode importNode : module.getStaticStarImports().values()) {
                 ClassNode type = importNode.getType();
-                if (resolve(type, true, true, true)) continue;
+                if (resolve(type, true, true)) continue;
                 addError("unable to resolve class " + type.getName(), type);
             }
             module.setImportsResolved(true);
@@ -1595,7 +1609,7 @@ public class ResolveVisitor extends ClassCodeExpressionTransformer {
                 boolean nameAdded = false;
                 for (ClassNode upperBound : bounds) {
                     if (!isWild) {
-                        if (!nameAdded && upperBound != null || !resolve(classNode)) {
+                        if (!nameAdded && upperBound != null || !resolve(classNode, true)) {
                             if (toDealWithGenerics) {
                                 genericParameterNames.put(gtn, type);
                                 type.setPlaceholder(true);

@@ -571,10 +571,11 @@ public class DefaultTypeTransformation {
                 if (right instanceof GString) {
                     return (left.toString()).compareTo(right.toString());
                 }
-            } else if (right instanceof Number) {
-                if (isValidCharacterString(left)) {
-                    return DefaultGroovyMethods.compareTo(ShortTypeHandling.castToChar(left), (Number) right);
-                }
+                // tptpatch - this makes no sense, single digit numbers as strings are treated differently than 2 digit numbers?
+//            } else if (right instanceof Number) {
+//                if (isValidCharacterString(left)) {
+//                    return DefaultGroovyMethods.compareTo(ShortTypeHandling.castToChar(left), (Number) right);
+//                }
             } else if (left instanceof String && right instanceof Character) {
                 return ((String) left).compareTo(right.toString());
             } else if (left instanceof String && right instanceof GString) {

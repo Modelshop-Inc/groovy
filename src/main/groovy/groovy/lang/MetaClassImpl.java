@@ -837,6 +837,8 @@ public class MetaClassImpl implements MetaClass, MutableMetaClass {
         return invokeMissingMethod(instance, methodName, arguments, null, false);
     }
 
+
+    private final Map<String, MissingPropertyExceptionNoStack> cachedKnownMissing = new ConcurrentHashMap<>();
     /**
      * Invoke a missing property on the given object with the given arguments.
      *
@@ -849,6 +851,12 @@ public class MetaClassImpl implements MetaClass, MutableMetaClass {
      */
     public Object invokeMissingProperty(Object instance, String propertyName, Object optionalValue, boolean isGetter) {
         Class theClass = instance instanceof Class ? (Class)instance : instance.getClass();
+
+        MissingPropertyExceptionNoStack exception;
+        if ((exception = cachedKnownMissing.get(propertyName))!=null) {
+            throw exception;
+        }
+
         CachedClass superClass = theCachedClass;
         while(superClass != null && superClass != ReflectionCache.OBJECT_CLASS) {
             final MetaBeanProperty property = findPropertyInClassHierarchy(propertyName, superClass);
@@ -913,7 +921,10 @@ public class MetaClassImpl implements MetaClass, MutableMetaClass {
                return null;
              }
         }
-        throw new MissingPropertyExceptionNoStack(propertyName, theClass);
+
+        exception = new MissingPropertyExceptionNoStack(propertyName, theClass);
+        cachedKnownMissing.put(propertyName, exception);
+        throw exception;
     }
 
     private Object invokeMissingMethod(Object instance, String methodName, Object[] arguments, RuntimeException original, boolean isCallToSuper) {
