@@ -52,6 +52,15 @@ public class FastMath extends NumberMath {
         throw new RuntimeException("Unsupported number type:" + number.getClass());
     }
 
+    // tpt patch 2020-07-21 (and all calls to this) - tweak normal numbers back to closest zero (e.g. 2.0 vs 1.99999999...)
+    private double roundOff(double value) {
+        double absValue = value < 0d ? -value : value;
+        if (absValue > 0.000000000001d && absValue < 100_000_000_000d) {
+            value = java.lang.Math.round(value * 100_000_000_000d) / 100_000_000_000d;
+        }
+        return value;
+    }
+
     @Override
     public Number addImpl(Number left, Number right) {
 
@@ -61,7 +70,7 @@ public class FastMath extends NumberMath {
         if (left instanceof BigDecimal || right instanceof BigDecimal) {
             return toBigDecimalLocal(left).add(toBigDecimalLocal(right));
         } else if (left instanceof Double || right instanceof Double) {
-            return left.doubleValue() + right.doubleValue();
+            return roundOff(left.doubleValue() + right.doubleValue());
         } else if (left instanceof Float || right instanceof Float) {
             return left.floatValue() + right.doubleValue();
         } else if (left instanceof BigInteger || right instanceof BigInteger) {
@@ -70,13 +79,13 @@ public class FastMath extends NumberMath {
             if (right instanceof Long || right instanceof Integer || right instanceof Short || right instanceof Byte) {
                 return left.longValue() + right.longValue();
             } else {
-                return left.doubleValue() + right.doubleValue();
+                return roundOff(left.doubleValue() + right.doubleValue());
             }
         } else if (left instanceof Integer || left instanceof Short || left instanceof Byte) {
             if (right instanceof Integer || right instanceof Short || right instanceof Byte) {
                 return left.intValue() + right.intValue();
             } else {
-                return left.doubleValue() + right.doubleValue();
+                return roundOff(left.doubleValue() + right.doubleValue());
             }
         }
         throw new RuntimeException("Unsupported number type:" + left.getClass() + " or " + right.getClass());
@@ -90,7 +99,7 @@ public class FastMath extends NumberMath {
         if (left instanceof BigDecimal || right instanceof BigDecimal) {
             return toBigDecimalLocal(left).subtract(toBigDecimalLocal(right));
         } else if (left instanceof Double || right instanceof Double) {
-            return left.doubleValue() - right.doubleValue();
+            return roundOff(left.doubleValue() - right.doubleValue());
         } else if (left instanceof Float || right instanceof Float) {
             return left.floatValue() - right.doubleValue();
         } else if (left instanceof BigInteger || right instanceof BigInteger) {
@@ -99,13 +108,13 @@ public class FastMath extends NumberMath {
             if (right instanceof Long || right instanceof Integer || right instanceof Short) {
                 return left.longValue() - right.longValue();
             } else {
-                return left.doubleValue() - right.doubleValue();
+                return roundOff(left.doubleValue() - right.doubleValue());
             }
         } else if (left instanceof Integer || left instanceof Short || left instanceof Byte) {
             if (right instanceof Integer || right instanceof Short || right instanceof Byte) {
                 return left.intValue() - right.intValue();
             } else {
-                return left.doubleValue() - right.doubleValue();
+                return roundOff(left.doubleValue() - right.doubleValue());
             }
         }
         throw new RuntimeException("Unsupported number type:" + left.getClass() + " or " + right.getClass());
@@ -118,7 +127,7 @@ public class FastMath extends NumberMath {
         if (left instanceof BigDecimal || right instanceof BigDecimal) {
             return toBigDecimalLocal(left).multiply(toBigDecimalLocal(right));
         } else if (left instanceof Double || right instanceof Double) {
-            return left.doubleValue() * right.doubleValue();
+            return roundOff(left.doubleValue() * right.doubleValue());
         } else if (left instanceof Float || right instanceof Float) {
             return left.floatValue() * right.doubleValue();
         } else if (left instanceof BigInteger || right instanceof BigInteger) {
@@ -127,13 +136,13 @@ public class FastMath extends NumberMath {
             if (right instanceof Long || right instanceof Integer || right instanceof Short) {
                 return left.longValue() * right.longValue();
             } else {
-                return left.doubleValue() * right.doubleValue();
+                return roundOff(left.doubleValue() * right.doubleValue());
             }
         } else if (left instanceof Integer || left instanceof Short || left instanceof Byte) {
             if (right instanceof Integer || right instanceof Short || right instanceof Byte) {
                 return left.intValue() * right.intValue();
             } else {
-                return left.doubleValue() * right.doubleValue();
+                return roundOff(left.doubleValue() * right.doubleValue());
             }
         }
         throw new RuntimeException("Unsupported number type:" + left.getClass() + " or " + right.getClass());
@@ -156,17 +165,17 @@ public class FastMath extends NumberMath {
         } else if (left instanceof Double || right instanceof Double) {
             return left.doubleValue() / right.doubleValue();
         } else if (left instanceof Float || right instanceof Float) {
-            return left.doubleValue() / right.doubleValue();
+            return roundOff(left.doubleValue() / right.doubleValue());
         } else if (left instanceof BigInteger || right instanceof BigInteger) {
             try {
                 return toBigDecimalLocal(left).divide(toBigDecimalLocal(right), DECIMAL64);
             } catch (ArithmeticException var9) {
-                return left.doubleValue() / right.doubleValue();
+                return roundOff(left.doubleValue() / right.doubleValue());
             }
         } else if (left instanceof Long) {
             return left.doubleValue() / right.doubleValue();
         } else if (left instanceof Integer || left instanceof Short || left instanceof Byte) {
-            return left.doubleValue() / right.doubleValue();
+            return roundOff(left.doubleValue() / right.doubleValue());
         }
         throw new RuntimeException("Unsupported number type:" + left.getClass() + " or " + right.getClass());
     }
