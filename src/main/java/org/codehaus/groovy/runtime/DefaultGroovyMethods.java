@@ -8225,6 +8225,14 @@ public class DefaultGroovyMethods extends DefaultGroovyMethodsSupport {
      * @since 1.0
      */
     public static List getAt(Collection coll, String property) {
+
+        // tpt - if collection has a get(String) method, use it instead to get the column of properties
+        MetaClass metaClass = InvokerHelper.getMetaClass(coll);
+        MetaMethod getMethod = metaClass.getMetaMethod("get", new Object[]{String.class});
+        if (getMethod!=null && List.class.isAssignableFrom(getMethod.getReturnType())) {
+            return (List) getMethod.doMethodInvoke(coll, new Object[]{property});
+        }
+
         List<Object> answer = new ArrayList<Object>(coll.size());
         return getAtIterable(coll, property, answer);
     }
@@ -9845,7 +9853,9 @@ public class DefaultGroovyMethods extends DefaultGroovyMethodsSupport {
      */
     public static <T> T first(List<T> self) {
         if (self.isEmpty()) {
-            throw new NoSuchElementException("Cannot access first() element from an empty List");
+            // tpt patch 2020-08-17
+            return null;
+            // throw new NoSuchElementException("Cannot access first() element from an empty List");
         }
         return self.get(0);
     }
@@ -9870,7 +9880,9 @@ public class DefaultGroovyMethods extends DefaultGroovyMethodsSupport {
     public static <T> T first(Iterable<T> self) {
         Iterator<T> iterator = self.iterator();
         if (!iterator.hasNext()) {
-            throw new NoSuchElementException("Cannot access first() element from an empty Iterable");
+            // tpt patch 2020-08-17
+            return null;
+//            throw new NoSuchElementException("Cannot access first() element from an empty Iterable");
         }
         return iterator.next();
     }
@@ -9889,7 +9901,9 @@ public class DefaultGroovyMethods extends DefaultGroovyMethodsSupport {
      */
     public static <T> T first(T[] self) {
         if (self.length == 0) {
-            throw new NoSuchElementException("Cannot access first() element from an empty array");
+            // tpt patch 2020-08-17
+            return null;
+//            throw new NoSuchElementException("Cannot access first() element from an empty array");
         }
         return self[0];
     }
@@ -10007,7 +10021,10 @@ public class DefaultGroovyMethods extends DefaultGroovyMethodsSupport {
      */
     public static <T> Collection<T> tail(Iterable<T> self) {
         if (!self.iterator().hasNext()) {
-            throw new NoSuchElementException("Cannot access tail() for an empty iterable");
+            // tpt patch 2020-08-17
+            return null;
+
+//            throw new NoSuchElementException("Cannot access tail() for an empty iterable");
         }
         Collection<T> result = createSimilarCollection(self);
         addAll(result, tail(self.iterator()));
@@ -10032,7 +10049,9 @@ public class DefaultGroovyMethods extends DefaultGroovyMethodsSupport {
     @SuppressWarnings("unchecked")
     public static <T> T[] tail(T[] self) {
         if (self.length == 0) {
-            throw new NoSuchElementException("Cannot access tail() for an empty array");
+            // tpt patch 2020-08-17
+            return null;
+//            throw new NoSuchElementException("Cannot access tail() for an empty array");
         }
         T[] result = createSimilarArray(self, self.length - 1);
         System.arraycopy(self, 1, result, 0, self.length - 1);
@@ -10049,7 +10068,9 @@ public class DefaultGroovyMethods extends DefaultGroovyMethodsSupport {
      */
     public static <T> Iterator<T> tail(Iterator<T> self) {
         if (!self.hasNext()) {
-            throw new NoSuchElementException("Cannot access tail() for an empty Iterator");
+            // tpt patch 2020-08-17
+            return null;
+//            throw new NoSuchElementException("Cannot access tail() for an empty Iterator");
         }
         self.next();
         return self;
