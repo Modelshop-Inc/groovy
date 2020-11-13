@@ -1213,7 +1213,7 @@ public class DefaultGroovyMethods extends DefaultGroovyMethodsSupport {
      * @since 1.0
      */
     public static <T> Collection<T> unique(Collection<T> self) {
-        return unique(self, true);
+        return unique(self, false);
     }
 
     /**
@@ -1227,7 +1227,7 @@ public class DefaultGroovyMethods extends DefaultGroovyMethodsSupport {
      * @since 2.4.0
      */
     public static <T> List<T> unique(List<T> self) {
-        return (List<T>) unique((Collection<T>) self, true);
+        return (List<T>) unique((Collection<T>) self, false);
     }
 
     /**
